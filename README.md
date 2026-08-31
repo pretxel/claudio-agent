@@ -42,7 +42,9 @@ agent/
     ├── researcher/
     ├── planner/
     └── summarizer/
-scripts/google-auth.mjs          # One-time helper to mint a Google refresh token
+scripts/
+├── google-auth.mjs              # One-time helper to mint a Google refresh token
+└── telegram.mjs                 # Bot setup: user id, webhook register/inspect
 ```
 
 ## Models
@@ -97,26 +99,45 @@ npm run dev          # eve dev server + interactive REPL
 npm run typecheck    # tsc
 ```
 
-## Telegram webhook
+## Telegram bot
 
-eve mounts the webhook at `POST /eve/v1/telegram` but does not register it.
-After deploying, register it yourself:
+The bot speaks for your Google account, so it only answers you: private chats
+from a user id in `TELEGRAM_ALLOWED_USER_IDS`. Everything else is dropped
+silently (`agent/channels/telegram.ts`). With the list empty, the bot answers
+nobody.
 
-```bash
-curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://your-app.example.com/eve/v1/telegram",
-       "secret_token":"'"$TELEGRAM_WEBHOOK_SECRET_TOKEN"'",
-       "allowed_updates":["message","callback_query"]}'
-```
+1. Create the bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and put
+   the token in `.env.local` as `TELEGRAM_BOT_TOKEN`.
+2. Find your user id — send the bot any message first, then:
 
-In private chats every message reaches the agent. In groups the bot only wakes
-on a command, an @-mention, or a reply to one of its own messages.
+   ```bash
+   node scripts/telegram.mjs whoami
+   ```
+
+   Copy the printed `TELEGRAM_ALLOWED_USER_IDS=...` into `.env.local`.
+3. Push all Telegram vars to Vercel and redeploy:
+
+   ```bash
+   vercel env add TELEGRAM_BOT_TOKEN production
+   vercel env add TELEGRAM_WEBHOOK_SECRET_TOKEN production
+   vercel env add TELEGRAM_ALLOWED_USER_IDS production
+   vercel deploy --prod
+   ```
+4. Register the webhook against the deployed URL (eve mounts the route but
+   never calls `setWebhook` itself):
+
+   ```bash
+   node scripts/telegram.mjs set-webhook https://claudio-agent.vercel.app/eve/v1/telegram
+   node scripts/telegram.mjs info          # verify: url set, pending_update_count, last_error
+   ```
+
+`node scripts/telegram.mjs delete-webhook` unregisters it — do that before
+running `whoami` again, since `getUpdates` and a webhook are mutually exclusive.
 
 ## Production notes
 
-- The bot speaks for your Google account. Anyone who can message it can read
-  your mail — restrict the bot to your own chat id before exposing it.
+- Keep `TELEGRAM_ALLOWED_USER_IDS` set. Without it the bot ignores everyone;
+  with the wrong id in it, a stranger reads your mail.
 - `agent/channels/eve.ts` ships with scaffold `placeholderAuth()` — replace it
   with a real auth provider before exposing the HTTP route publicly.
 - `npm run build` / `npm start` for production build and serve.
