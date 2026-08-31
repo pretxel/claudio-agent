@@ -6,6 +6,17 @@
 // http://localhost:8910/callback registered as a redirect URI).
 
 import { createServer } from "node:http";
+import { readFileSync } from "node:fs";
+
+// Fall back to .env.local for anything not already in the environment.
+try {
+  for (const line of readFileSync(".env.local", "utf8").split("\n")) {
+    const match = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim());
+    if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
+  }
+} catch {
+  // No .env.local — rely on the ambient environment.
+}
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
