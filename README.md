@@ -8,11 +8,11 @@ delegates heavier work to three specialist subagents. All models route through
 ## How it works
 
 ```
-Telegram bot ──▶ Claudio ──▶ researcher   (facts, options, references)
+Telegram bot ──▶ Claudio ──▶ researcher   (web search + page reading)
                     │    ──▶ planner      (goal → ordered plan with dates)
                     │    ──▶ summarizer   (long material → short brief)
                     │
-                    └──▶ Google Calendar + Gmail tools
+                    └──▶ Google Calendar + Gmail + web search
                     ▼
               Answer back to you
 ```
@@ -28,18 +28,22 @@ agent/
 ├── instructions.md              # Orchestrator system prompt
 ├── lib/
 │   ├── model.ts                 # OpenRouter model selection (single source of truth)
-│   └── google.ts                # Google OAuth token minting + REST helpers
+│   ├── google.ts                # Google OAuth token minting + REST helpers
+│   ├── tavily.ts                # Web search and page extraction
+│   ├── elevenlabs.ts            # Speech-to-text and text-to-speech
+│   └── telegram-media.ts        # Voice note download and sendVoice
 ├── tools/
 │   ├── agent.ts                 # Disables the built-in self-copy tool
 │   ├── calendar_list_events.ts  # Read events in a time window
 │   ├── calendar_create_event.ts # Create an event
 │   ├── gmail_search.ts          # Gmail query syntax search
-│   └── gmail_read_message.ts    # Read one message body
+│   ├── gmail_read_message.ts    # Read one message body
+│   └── web_search.ts            # Tavily search
 ├── channels/
 │   ├── telegram.ts              # Telegram bot channel
 │   └── eve.ts                   # Default HTTP/TUI channel (local dev + TUI)
 └── subagents/
-    ├── researcher/
+    ├── researcher/              # own tools/: web_search, web_fetch
     ├── planner/
     └── summarizer/
 scripts/
@@ -98,6 +102,33 @@ edit `scopes` in `scripts/google-auth.mjs` and mint the token again.
 npm run dev          # eve dev server + interactive REPL
 npm run typecheck    # tsc
 ```
+
+## Web search
+
+`web_search` (Tavily) sits on the orchestrator for one-off facts. The
+`researcher` subagent has its own copy plus `web_fetch`, which pulls the full
+text of a page when a search extract is too thin.
+
+Get a key at [app.tavily.com](https://app.tavily.com) and set `TAVILY_API_KEY`.
+Searches default to `basic` depth; the model escalates to `advanced` on its own
+when results come back thin, and `topic: "news"` narrows to a recent window.
+
+## Voice notes
+
+The bot transcribes inbound voice notes and speaks its replies, both through
+[ElevenLabs](https://elevenlabs.io). eve's Telegram channel only parses photos
+and documents, so `agent/channels/telegram.ts` pulls the audio file id out of
+the raw update itself, transcribes it with Scribe, and writes the transcript
+onto the message so the turn is not empty.
+
+Set `ELEVENLABS_API_KEY`. Two limits worth knowing:
+
+- On the free plan only **premade** voices work through the API. Library and
+  professional voices return `402 paid_plan_required`, Spanish ones included.
+  The default is Sarah (`EXAVITQu4vr4xnSDxMaL`) with `eleven_multilingual_v2`.
+- Replies over 1200 characters are sent as text only, since ElevenLabs bills per
+  character. `TELEGRAM_VOICE_REPLY=off` turns speech off entirely; the text
+  reply is always sent either way.
 
 ## Telegram bot
 
