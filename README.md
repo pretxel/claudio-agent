@@ -172,3 +172,12 @@ running `whoami` again, since `getUpdates` and a webhook are mutually exclusive.
 - `agent/channels/eve.ts` ships with scaffold `placeholderAuth()` — replace it
   with a real auth provider before exposing the HTTP route publicly.
 - `npm run build` / `npm start` for production build and serve.
+
+## Long-term memory
+
+Claudio remembers stable facts across conversations and channels with the `remember`, `forget`
+and `list_memories` tools. Storage is the team's Upstash Redis (`upstash-kv-indigo-school`,
+connected via `vercel integration resource connect`), hash `claudio:memory:owner`. Memories are
+injected into the system prompt at the start of every turn by `agent/instructions/memory.ts`.
+Without `KV_REST_API_URL`/`KV_REST_API_TOKEN` the agent falls back to an in-process store and
+says so. Run `vercel env pull` to get the credentials locally.
