@@ -1,10 +1,10 @@
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { handleSpeak, handleTranscribe, MAX_SPEAK_CHARS } from "#lib/voice-handlers.ts";
-import { filenameForMediaType } from "#lib/elevenlabs.ts";
+import { DEFAULT_OUTPUT_FORMAT, filenameForMediaType, synthesizeSpeech, transcribeAudio } from "#lib/elevenlabs.ts";
 
 const KEY = "ios-key";
-const BASE = "https://agent.test/eve/v1/voice";
+const BASE = "https://agent.test";
 const realFetch = globalThis.fetch;
 let calls: { url: string; init: RequestInit }[] = [];
 let nextResponse: () => Response = () => new Response("{}");
@@ -103,13 +103,47 @@ test("transcribe: 400 on non-multipart body", async () => {
   assert.equal(res.status, 400);
 });
 
-test("transcribe: 502 when ElevenLabs fails", async () => {
-  nextResponse = () => new Response("quota", { status: 429 });
+test("transcribe: 502 when ElevenLabs fails, without leaking the upstream body", async () => {
+  nextResponse = () => new Response("secret quota details", { status: 429 });
   const res = await handleTranscribe(audioRequest());
   assert.equal(res.status, 502);
   const body = await res.json();
   assert.equal(body.code, "upstream_error");
   assert.match(body.error, /429/);
+  assert.doesNotMatch(body.error, /secret/);
+});
+
+test("transcribe: 400 when content-length announces an oversized body", async () => {
+  const req = new Request(`${BASE}/transcribe`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${KEY}`, "content-length": String(50 * 1024 * 1024), "content-type": "multipart/form-data; boundary=x" },
+    body: "x",
+  });
+  const res = await handleTranscribe(req);
+  assert.equal(res.status, 400);
+  assert.equal(calls.length, 0);
+});
+
+test("speak: 500 misconfigured when ELEVENLABS_API_KEY is missing", async () => {
+  delete process.env.ELEVENLABS_API_KEY;
+  const res = await handleSpeak(speakRequest({ text: "hola" }));
+  assert.equal(res.status, 500);
+  assert.equal((await res.json()).code, "misconfigured");
+});
+
+test("speak: 401 with wrong key", async () => {
+  const res = await handleSpeak(speakRequest({ text: "hola" }, "bad"));
+  assert.equal(res.status, 401);
+});
+
+test("elevenlabs defaults keep the Telegram contract (opus + .ogg)", async () => {
+  nextResponse = () => new Response(new Uint8Array([1]));
+  await synthesizeSpeech("hola");
+  assert.match(calls[0].url, new RegExp(`output_format=${DEFAULT_OUTPUT_FORMAT}`));
+  assert.equal(DEFAULT_OUTPUT_FORMAT, "opus_48000_64");
+  nextResponse = () => Response.json({ text: "x" });
+  await transcribeAudio(new ArrayBuffer(8));
+  assert.equal(((calls[1].init.body as FormData).get("file") as File).name, "voice.ogg");
 });
 
 test("speak: 401 without key", async () => {

@@ -1,5 +1,5 @@
 import { eveChannel } from "eve/channels/eve";
-import { localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { localDev, vercelOidc } from "eve/channels/auth";
 import { apiKeyAuth } from "#lib/api-key-auth.ts";
 
 export default eveChannel({
@@ -10,7 +10,6 @@ export default eveChannel({
     vercelOidc(),
     // Open on localhost for `eve dev` and the REPL; ignored in production.
     localDev(),
-    // Falls through to a structured 401 when nothing above matched.
-    placeholderAuth(),
+    // No placeholder: routeAuth fails closed with a 401 + `WWW-Authenticate: Bearer` challenge.
   ],
 });
