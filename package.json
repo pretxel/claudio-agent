@@ -10,7 +10,8 @@
     "build": "eve build",
     "dev": "eve dev",
     "start": "eve start",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "node --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "@openrouter/ai-sdk-provider": "^3.0.0",
