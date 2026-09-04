@@ -11,6 +11,7 @@ const API = "https://api.elevenlabs.io/v1";
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
 export const DEFAULT_OUTPUT_FORMAT = "opus_48000_64";
+export const DEFAULT_STT_MODEL_ID = "scribe_v2";
 
 function apiKey(): string {
   const key = process.env.ELEVENLABS_API_KEY;
@@ -48,7 +49,7 @@ export async function transcribeAudio(
 ): Promise<string> {
   const form = new FormData();
   form.append("file", new Blob([audio], { type: mediaType }), filenameForMediaType(mediaType));
-  form.append("model_id", "scribe_v1");
+  form.append("model_id", process.env.ELEVENLABS_STT_MODEL_ID || DEFAULT_STT_MODEL_ID);
 
   const res = await fetch(`${API}/speech-to-text`, {
     method: "POST",
@@ -69,7 +70,7 @@ export const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
 export type SynthesizeOptions = {
   /** ElevenLabs output_format, e.g. "opus_48000_64" (default) or "mp3_44100_128". */
   outputFormat?: string;
-  /** ElevenLabs model, e.g. "eleven_turbo_v2_5" for low latency. Defaults to ELEVENLABS_MODEL_ID. */
+  /** ElevenLabs model, e.g. "eleven_flash_v2_5" for low latency or "eleven_v3" for expressiveness. Defaults to ELEVENLABS_MODEL_ID. */
   modelId?: string;
 };
 

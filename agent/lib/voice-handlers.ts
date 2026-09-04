@@ -10,8 +10,8 @@ import { synthesizeSpeech, transcribeAudio } from "#lib/elevenlabs.ts";
 export const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 export const MAX_SPEAK_CHARS = 4000;
 export const SPEAK_OUTPUT_FORMAT = "mp3_44100_128";
-/** Low-latency multilingual model for sentence-by-sentence playback in the app. */
-export const DEFAULT_APP_MODEL_ID = "eleven_turbo_v2_5";
+/** Low-latency multilingual model for sentence-by-sentence playback in the app (turbo v2.5 is deprecated). */
+export const DEFAULT_APP_MODEL_ID = "eleven_flash_v2_5";
 export function appModelId(): string {
   return process.env.ELEVENLABS_APP_MODEL_ID || DEFAULT_APP_MODEL_ID;
 }

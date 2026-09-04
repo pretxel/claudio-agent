@@ -67,7 +67,7 @@ test("transcribe: 200 with text", async () => {
   const sent = calls[0].init.body as FormData;
   const file = sent.get("file") as File;
   assert.equal(file.name, "voice.m4a");
-  assert.equal(sent.get("model_id"), "scribe_v1");
+  assert.equal(sent.get("model_id"), "scribe_v2");
 });
 
 test("transcribe: empty transcript returns empty text", async () => {
@@ -162,7 +162,7 @@ test("speak: 200 audio/mpeg using mp3 format", async () => {
   assert.match(calls[0].url, /output_format=mp3_44100_128/);
   const sent = JSON.parse(calls[0].init.body as string);
   assert.equal(sent.text, "hola");
-  assert.equal(sent.model_id, "eleven_turbo_v2_5");
+  assert.equal(sent.model_id, "eleven_flash_v2_5");
 });
 
 test("speak: 400 on invalid text", async () => {
