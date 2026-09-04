@@ -4,10 +4,12 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// Single place to pick OpenRouter models for the orchestrator and subagents.
+// Cap the output budget per model. Without it OpenRouter assumes the model's
+// full max output (64k on Sonnet 4.5) and rejects the call up front whenever
+// the account balance can't cover that worst case.
 export const models = {
-  orchestrator: openrouter.chat("anthropic/claude-sonnet-4.5"),
-  researcher: openrouter.chat("google/gemini-2.5-flash"),
-  planner: openrouter.chat("anthropic/claude-sonnet-4.5"),
-  summarizer: openrouter.chat("openai/gpt-4o-mini"),
+  orchestrator: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 8000 }),
+  researcher: openrouter.chat("google/gemini-2.5-flash", { maxTokens: 8000 }),
+  planner: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 8000 }),
+  summarizer: openrouter.chat("openai/gpt-4o-mini", { maxTokens: 4000 }),
 };
