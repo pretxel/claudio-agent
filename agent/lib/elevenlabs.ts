@@ -64,9 +64,13 @@ export async function transcribeAudio(
   return (data.text ?? "").trim();
 }
 
+export const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
+
 export type SynthesizeOptions = {
   /** ElevenLabs output_format, e.g. "opus_48000_64" (default) or "mp3_44100_128". */
   outputFormat?: string;
+  /** ElevenLabs model, e.g. "eleven_turbo_v2_5" for low latency. Defaults to ELEVENLABS_MODEL_ID. */
+  modelId?: string;
 };
 
 /** Render text as speech. Defaults to OGG/Opus for Telegram voice notes. */
@@ -75,7 +79,7 @@ export async function synthesizeSpeech(
   options: SynthesizeOptions = {},
 ): Promise<ArrayBuffer> {
   const voiceId = process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
-  const modelId = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2";
+  const modelId = options.modelId ?? (process.env.ELEVENLABS_MODEL_ID || DEFAULT_MODEL_ID);
   const outputFormat = options.outputFormat ?? DEFAULT_OUTPUT_FORMAT;
 
   const res = await fetch(

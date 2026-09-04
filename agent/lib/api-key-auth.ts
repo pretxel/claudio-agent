@@ -15,6 +15,21 @@ const OWNER_AUTH: SessionAuthContext = {
   attributes: {},
 };
 
+/** How the client will present this turn's reply; drives the spoken-style instruction. */
+export const CLIENT_MODES = ["voice", "chat"] as const;
+export type ClientMode = (typeof CLIENT_MODES)[number];
+export const MODE_HEADER = "x-claudio-mode";
+
+export function clientMode(request: Request): ClientMode | undefined {
+  const raw = request.headers.get(MODE_HEADER)?.trim().toLowerCase();
+  return (CLIENT_MODES as readonly string[]).includes(raw ?? "") ? (raw as ClientMode) : undefined;
+}
+
+function ownerAuth(request: Request): SessionAuthContext {
+  const mode = clientMode(request);
+  return mode ? { ...OWNER_AUTH, attributes: { mode } } : OWNER_AUTH;
+}
+
 function bearerToken(request: Request): string | null {
   const header = request.headers.get("authorization");
   if (!header) return null;
@@ -41,7 +56,7 @@ export function isValidApiKey(request: Request): boolean {
 /** eve `AuthFn` that accepts the owner's API key. Advertises a Bearer challenge. */
 export function apiKeyAuth(): AuthFn<Request> {
   return withAuthChallenges(
-    (request) => (isValidApiKey(request) ? OWNER_AUTH : null),
+    (request) => (isValidApiKey(request) ? ownerAuth(request) : null),
     [{ scheme: "Bearer" }],
   );
 }

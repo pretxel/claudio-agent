@@ -136,10 +136,12 @@ test("speak: 401 with wrong key", async () => {
   assert.equal(res.status, 401);
 });
 
-test("elevenlabs defaults keep the Telegram contract (opus + .ogg)", async () => {
+test("elevenlabs defaults keep the Telegram contract (opus + .ogg + multilingual model)", async () => {
   nextResponse = () => new Response(new Uint8Array([1]));
+  delete process.env.ELEVENLABS_MODEL_ID;
   await synthesizeSpeech("hola");
   assert.match(calls[0].url, new RegExp(`output_format=${DEFAULT_OUTPUT_FORMAT}`));
+  assert.equal(JSON.parse(calls[0].init.body as string).model_id, "eleven_multilingual_v2");
   assert.equal(DEFAULT_OUTPUT_FORMAT, "opus_48000_64");
   nextResponse = () => Response.json({ text: "x" });
   await transcribeAudio(new ArrayBuffer(8));
@@ -158,7 +160,9 @@ test("speak: 200 audio/mpeg using mp3 format", async () => {
   assert.equal(res.headers.get("content-type"), "audio/mpeg");
   assert.deepEqual(new Uint8Array(await res.arrayBuffer()), new Uint8Array([1, 2, 3]));
   assert.match(calls[0].url, /output_format=mp3_44100_128/);
-  assert.equal(JSON.parse(calls[0].init.body as string).text, "hola");
+  const sent = JSON.parse(calls[0].init.body as string);
+  assert.equal(sent.text, "hola");
+  assert.equal(sent.model_id, "eleven_turbo_v2_5");
 });
 
 test("speak: 400 on invalid text", async () => {
