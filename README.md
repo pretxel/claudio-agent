@@ -75,6 +75,11 @@ npm install
 cp .env.example .env.local   # then fill it in
 ```
 
+Set `CLAUDIO_TIME_ZONE` to the owner's IANA time zone (for example,
+`Europe/Madrid`). Claudio receives the current UTC instant, local date, local
+time, UTC offset, and time zone at the start of every turn, so phrases such as
+"today" and "tomorrow" keep working in long-lived conversations.
+
 ## Google access
 
 The Google tools act as one account (yours) using a refresh token — there is no
