@@ -32,6 +32,17 @@ export async function downloadTelegramFile(fileId: string): Promise<ArrayBuffer>
   return file.arrayBuffer();
 }
 
+/** Send a plain-text message outside any agent session. */
+export async function sendTelegramText(input: { chatId: string; text: string }): Promise<void> {
+  const res = await fetch(`https://api.telegram.org/bot${botToken()}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: input.chatId, text: input.text.slice(0, 4096) }),
+  });
+  const data = (await res.json()) as { ok: boolean; description?: string };
+  if (!data.ok) throw new Error(`sendMessage failed: ${data.description ?? res.status}`);
+}
+
 /** Send an OGG/Opus clip as a Telegram voice note. */
 export async function sendTelegramVoice(input: {
   chatId: string;

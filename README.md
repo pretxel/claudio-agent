@@ -174,3 +174,44 @@ connected via `vercel integration resource connect`), hash `claudio:memory:owner
 injected into the system prompt at the start of every turn by `agent/instructions/memory.ts`.
 Without `KV_REST_API_URL`/`KV_REST_API_TOKEN` the agent falls back to an in-process store and
 says so. Run `vercel env pull` to get the credentials locally.
+
+## Reminders and morning brief
+
+Claudio can set reminders ("recuérdame mañana a las 9 llamar a mamá") and sends
+a morning brief every day on Telegram. Both are driven by
+[Upstash QStash](https://upstash.com/docs/qstash) rather than Vercel Cron:
+Vercel Hobby only allows daily crons that fire anywhere within the hour, and
+evaluates them in UTC.
+
+- Each pending reminder is one delayed QStash message that calls
+  `POST /eve/v1/qstash/reminder` at its due time. The route verifies the
+  `Upstash-Signature`, sends the text straight to Telegram (no model call), and
+  enqueues the next occurrence for `daily`, `weekdays`, or `weekly` reminders.
+  Reminders live in the same Upstash Redis as long-term memory.
+- QStash's free plan caps delays at 7 days, so a reminder further out hops:
+  the message arrives early, sees it is not due yet, and re-queues itself. Set
+  `QSTASH_MAX_DELAY_DAYS` if your plan allows longer.
+- The morning brief is a QStash schedule that calls
+  `POST /eve/v1/qstash/morning-brief`. That starts a normal agent session on
+  Telegram, so Claudio reads today's calendar, recent unread mail, and today's
+  reminders with its own tools. Replying continues the conversation.
+
+Setup:
+
+```bash
+vercel integration add upstash/upstash-qstash   # adds QSTASH_* to the project
+vercel --prod                                   # deploy the new routes first
+
+# Register the brief (idempotent; re-run after changing the time)
+CLAUDIO_PUBLIC_URL=https://<your-production-domain> \
+  node --env-file=.env.local scripts/qstash-schedules.mjs brief
+node --env-file=.env.local scripts/qstash-schedules.mjs list
+```
+
+The brief fires at `CLAUDIO_BRIEF_TIME` (default `08:00`) in
+`CLAUDIO_TIME_ZONE`. Messages go to `TELEGRAM_OWNER_CHAT_ID`, or to the first
+id in `TELEGRAM_ALLOWED_USER_IDS`.
+
+QStash cannot reach `localhost`, so under `eve dev` reminders are stored but
+only delivered by a deployment whose `CLAUDIO_PUBLIC_URL` (or
+`VERCEL_PROJECT_PRODUCTION_URL`) points at it.
