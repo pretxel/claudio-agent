@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { googlePost } from "#lib/google.ts";
+import { googleAuth, googlePost } from "#lib/google.ts";
 
 export default defineTool({
   description:
@@ -16,13 +16,15 @@ export default defineTool({
     attendees: z.array(z.string().email()).optional(),
     calendarId: z.string().default("primary"),
   }),
-  async execute(input) {
+  async execute(input, ctx) {
+    const { token } = await ctx.getToken(googleAuth);
     const bound = (value: string) =>
       input.allDay
         ? { date: value }
         : { dateTime: value, ...(input.timeZone ? { timeZone: input.timeZone } : {}) };
 
     const created = await googlePost<{ id: string; htmlLink?: string }>(
+      token,
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(input.calendarId)}/events`,
       {
         summary: input.title,

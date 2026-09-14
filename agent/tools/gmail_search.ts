@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { googleGet } from "#lib/google.ts";
+import { googleAuth, googleGet } from "#lib/google.ts";
 
 type Message = {
   id: string;
@@ -20,8 +20,10 @@ export default defineTool({
     query: z.string().min(1).describe("Gmail search query."),
     maxResults: z.number().int().min(1).max(25).default(10),
   }),
-  async execute({ query, maxResults }) {
+  async execute({ query, maxResults }, ctx) {
+    const { token } = await ctx.getToken(googleAuth);
     const list = await googleGet<{ messages?: { id: string }[] }>(
+      token,
       "https://gmail.googleapis.com/gmail/v1/users/me/messages",
       { q: query, maxResults },
     );
@@ -29,6 +31,7 @@ export default defineTool({
     const messages = await Promise.all(
       (list.messages ?? []).map((ref) =>
         googleGet<Message>(
+          token,
           `https://gmail.googleapis.com/gmail/v1/users/me/messages/${ref.id}`,
           { format: "metadata" },
         ),

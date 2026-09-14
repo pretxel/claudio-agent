@@ -82,24 +82,12 @@ time, UTC offset, and time zone at the start of every turn, so phrases such as
 
 ## Google access
 
-The Google tools act as one account (yours) using a refresh token — there is no
-per-user OAuth consent flow.
-
-1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
-   create a project, enable the **Gmail API** and the **Google Calendar API**,
-   and create an OAuth client of type **Desktop app**.
-2. Add yourself as a test user on the OAuth consent screen.
-3. Mint a refresh token:
-
-   ```bash
-   GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... node scripts/google-auth.mjs
-   ```
-
-   Open the printed URL, approve, and copy `GOOGLE_REFRESH_TOKEN` into `.env.local`.
+The Google tools act as one account (yours) through the Vercel Connect connector
+`google/claudio-google`. Connect stores the OAuth grant and automatically rotates
+the short-lived access token used by the agent.
 
 Scopes requested: `calendar.events` (read + write) and `gmail.readonly`. The
-agent can create calendar events; it cannot send or delete mail. To grant more,
-edit `scopes` in `scripts/google-auth.mjs` and mint the token again.
+agent can create calendar events; it cannot send or delete mail.
 
 ## Run locally
 

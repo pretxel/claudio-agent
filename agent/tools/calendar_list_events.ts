@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { googleGet } from "#lib/google.ts";
+import { googleAuth, googleGet } from "#lib/google.ts";
 
 type CalendarEvent = {
   id: string;
@@ -24,9 +24,11 @@ export default defineTool({
     calendarId: z.string().default("primary"),
     maxResults: z.number().int().min(1).max(50).default(20),
   }),
-  async execute({ timeMin, timeMax, query, calendarId, maxResults }) {
+  async execute({ timeMin, timeMax, query, calendarId, maxResults }, ctx) {
+    const { token } = await ctx.getToken(googleAuth);
     const now = new Date();
     const data = await googleGet<{ items?: CalendarEvent[] }>(
+      token,
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
       {
         timeMin: timeMin ?? now.toISOString(),

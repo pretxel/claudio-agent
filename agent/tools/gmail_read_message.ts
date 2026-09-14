@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { googleGet } from "#lib/google.ts";
+import { googleAuth, googleGet } from "#lib/google.ts";
 
 type Part = {
   mimeType?: string;
@@ -50,8 +50,10 @@ export default defineTool({
     messageId: z.string().min(1),
     maxBodyChars: z.number().int().min(500).max(50_000).default(8_000),
   }),
-  async execute({ messageId, maxBodyChars }) {
+  async execute({ messageId, maxBodyChars }, ctx) {
+    const { token } = await ctx.getToken(googleAuth);
     const message = await googleGet<Message>(
+      token,
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}`,
       { format: "full" },
     );
