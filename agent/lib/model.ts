@@ -15,14 +15,13 @@ const bedrockOnly = {
   allow_fallbacks: false,
 };
 
-// Each cap sits at the model's own ceiling: Sonnet 4.5 and Haiku 4.5 both top
-// out at 64000 completion tokens. Setting them explicitly keeps the request
-// bounded — OpenRouter otherwise assumes the ceiling anyway and, when a call
-// falls back off BYOK onto credits, rejects it up front if the balance can't
-// cover that worst case.
+// OpenRouter checks every request's worst case (maxTokens at full price)
+// against the credit balance before routing, and rejects it up front when the
+// balance can't cover it. Replies here are short Telegram messages, so 8000
+// keeps that check small instead of the models' 64000 ceiling.
 export const models = {
-  orchestrator: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 64000, provider: bedrockOnly }),
-  researcher: openrouter.chat("anthropic/claude-haiku-4.5", { maxTokens: 64000, provider: bedrockOnly }),
-  planner: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 64000, provider: bedrockOnly }),
-  summarizer: openrouter.chat("anthropic/claude-haiku-4.5", { maxTokens: 64000, provider: bedrockOnly }),
+  orchestrator: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 8000, provider: bedrockOnly }),
+  researcher: openrouter.chat("anthropic/claude-haiku-4.5", { maxTokens: 8000, provider: bedrockOnly }),
+  planner: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 8000, provider: bedrockOnly }),
+  summarizer: openrouter.chat("anthropic/claude-haiku-4.5", { maxTokens: 8000, provider: bedrockOnly }),
 };
