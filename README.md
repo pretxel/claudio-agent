@@ -55,12 +55,18 @@ scripts/
 
 Model selection lives in `agent/lib/model.ts` — change models in that one file.
 
+All requests are pinned to the Amazon Bedrock provider on OpenRouter
+(`provider: { only: ["amazon-bedrock"], allow_fallbacks: false }`) so they bill
+against your Bedrock BYOK key. Only pick models that Bedrock serves, and turn on
+"Always use this key" for Bedrock in OpenRouter's integration settings so a
+failing key errors instead of spending OpenRouter credits.
+
 | Agent        | Model                         |
 | ------------ | ----------------------------- |
 | Orchestrator | `anthropic/claude-sonnet-4.5` |
-| Researcher   | `google/gemini-2.5-flash`     |
+| Researcher   | `anthropic/claude-haiku-4.5`  |
 | Planner      | `anthropic/claude-sonnet-4.5` |
-| Summarizer   | `openai/gpt-4o-mini`          |
+| Summarizer   | `anthropic/claude-haiku-4.5`  |
 
 Models are AI SDK `LanguageModel` instances from `@openrouter/ai-sdk-provider`,
 so each `agent.ts` must set `modelContextWindowTokens` explicitly — eve cannot

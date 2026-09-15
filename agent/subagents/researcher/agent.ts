@@ -5,5 +5,5 @@ export default defineAgent({
   description:
     "Gathers facts, options, comparisons, and references on a topic before the assistant answers or plans.",
   model: models.researcher,
-  modelContextWindowTokens: 1_000_000,
+  modelContextWindowTokens: 200_000,
 });
