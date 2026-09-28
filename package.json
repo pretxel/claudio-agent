@@ -14,7 +14,7 @@
     "test": "node --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
-    "@openrouter/ai-sdk-provider": "^3.0.0",
+    "@ai-sdk/amazon-bedrock": "^5.0.99",
     "@upstash/qstash": "^2.11.3",
     "@upstash/redis": "^1.38.4",
     "@vercel/connect": "0.4.3",

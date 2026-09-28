@@ -1,27 +1,17 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+// Authenticates with a Bedrock API key (bearer token) instead of SigV4 IAM
+// credentials. Region comes from AWS_REGION, which Vercel sets to the
+// function's region, so the models use global cross-region inference profiles
+// that are callable from any commercial region.
+const bedrock = createAmazonBedrock({
+  apiKey: process.env.AWS_BEARER_TOKEN_BEDROCK,
+  region: process.env.AWS_REGION,
 });
 
-// Every request is pinned to Amazon Bedrock so it bills against the Bedrock
-// key configured in OpenRouter (BYOK). With fallbacks off, OpenRouter returns
-// an error instead of silently routing to Anthropic, Vertex, or Azure, which is
-// why every model here must be one Bedrock serves. To stop OpenRouter falling
-// back from the BYOK key onto its own credits, enable "Always use this key" on
-// the Bedrock integration at https://openrouter.ai/settings/integrations.
-const bedrockOnly = {
-  only: ["amazon-bedrock"],
-  allow_fallbacks: false,
-};
-
-// OpenRouter checks every request's worst case (maxTokens at full price)
-// against the credit balance before routing, and rejects it up front when the
-// balance can't cover it. Replies here are short Telegram messages, so 8000
-// keeps that check small instead of the models' 64000 ceiling.
 export const models = {
-  orchestrator: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 8000, provider: bedrockOnly }),
-  researcher: openrouter.chat("anthropic/claude-haiku-4.5", { maxTokens: 8000, provider: bedrockOnly }),
-  planner: openrouter.chat("anthropic/claude-sonnet-4.5", { maxTokens: 8000, provider: bedrockOnly }),
-  summarizer: openrouter.chat("anthropic/claude-haiku-4.5", { maxTokens: 8000, provider: bedrockOnly }),
+  orchestrator: bedrock("global.anthropic.claude-sonnet-4-5-20250929-v1:0"),
+  researcher: bedrock("global.anthropic.claude-haiku-4-5-20251001-v1:0"),
+  planner: bedrock("global.anthropic.claude-sonnet-4-5-20250929-v1:0"),
+  summarizer: bedrock("global.anthropic.claude-haiku-4-5-20251001-v1:0"),
 };

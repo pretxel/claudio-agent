@@ -2,8 +2,8 @@
 
 Personal assistant built on the [eve](https://eve.dev) framework. A root
 orchestrator answers directly, reads your Google Calendar and Gmail, and
-delegates heavier work to three specialist subagents. All models route through
-[OpenRouter](https://openrouter.ai), and you talk to the agent over Telegram.
+delegates heavier work to three specialist subagents. All models run on
+[Amazon Bedrock](https://aws.amazon.com/bedrock/), and you talk to the agent over Telegram.
 
 ## How it works
 
@@ -27,7 +27,7 @@ agent/
 ├── agent.ts                     # Root orchestrator config
 ├── instructions.md              # Orchestrator system prompt
 ├── lib/
-│   ├── model.ts                 # OpenRouter model selection (single source of truth)
+│   ├── model.ts                 # Bedrock model selection (single source of truth)
 │   ├── google.ts                # Google OAuth token minting + REST helpers
 │   ├── tavily.ts                # Web search and page extraction
 │   ├── elevenlabs.ts            # Speech-to-text and text-to-speech
@@ -55,20 +55,20 @@ scripts/
 
 Model selection lives in `agent/lib/model.ts` — change models in that one file.
 
-All requests are pinned to the Amazon Bedrock provider on OpenRouter
-(`provider: { only: ["amazon-bedrock"], allow_fallbacks: false }`) so they bill
-against your Bedrock BYOK key. Only pick models that Bedrock serves, and turn on
-"Always use this key" for Bedrock in OpenRouter's integration settings so a
-failing key errors instead of spending OpenRouter credits.
+Models are called directly on Amazon Bedrock, authenticated with a Bedrock API
+key (`AWS_BEARER_TOKEN_BEDROCK`) rather than IAM credentials. They use `global.`
+cross-region inference profiles, which work from any commercial region — Vercel
+sets `AWS_REGION` to the function's region, so the profile must not depend on it.
+Enable model access for each model in the Bedrock console.
 
-| Agent        | Model                         |
-| ------------ | ----------------------------- |
-| Orchestrator | `anthropic/claude-sonnet-4.5` |
-| Researcher   | `anthropic/claude-haiku-4.5`  |
-| Planner      | `anthropic/claude-sonnet-4.5` |
-| Summarizer   | `anthropic/claude-haiku-4.5`  |
+| Agent        | Model                                              |
+| ------------ | -------------------------------------------------- |
+| Orchestrator | `global.anthropic.claude-sonnet-4-5-20250929-v1:0` |
+| Researcher   | `global.anthropic.claude-haiku-4-5-20251001-v1:0`  |
+| Planner      | `global.anthropic.claude-sonnet-4-5-20250929-v1:0` |
+| Summarizer   | `global.anthropic.claude-haiku-4-5-20251001-v1:0`  |
 
-Models are AI SDK `LanguageModel` instances from `@openrouter/ai-sdk-provider`,
+Models are AI SDK `LanguageModel` instances from `@ai-sdk/amazon-bedrock`,
 so each `agent.ts` must set `modelContextWindowTokens` explicitly — eve cannot
 infer context windows for direct provider models.
 
