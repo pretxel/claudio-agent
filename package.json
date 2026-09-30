@@ -27,7 +27,8 @@
     "typescript": "7.0.2"
   },
   "overrides": {
-    "ai": "^7.0.38"
+    "ai": "^7.0.38",
+    "@ai-sdk/provider": "4.0.19"
   },
   "engines": {
     "node": "24.x"
