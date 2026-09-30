@@ -5,7 +5,7 @@ import { defineChannel, POST } from "eve/channels";
 import { Receiver } from "@upstash/qstash";
 import { z } from "zod";
 import { renderMorningBriefPrompt } from "#lib/morning-brief.ts";
-import { ownerChatId } from "#lib/owner-chat.ts";
+import { ownerChatId, ownerTelegramAuth } from "#lib/owner-chat.ts";
 import { fireReminder } from "#lib/reminder-delivery.ts";
 import { getReminderQueue, MORNING_BRIEF_ROUTE, REMINDER_ROUTE } from "#lib/reminder-queue.ts";
 import { getReminderStore } from "#lib/reminder-store.ts";
@@ -62,7 +62,7 @@ export default defineChannel({
       });
       waitUntil(
         to(telegram, { chatId: ownerChatId() }).send(prompt, {
-          auth: { authenticator: "qstash", principalType: "service", principalId: "morning-brief", attributes: {} },
+          auth: ownerTelegramAuth(),
         }),
       );
       return Response.json({ started: true });

@@ -12,3 +12,21 @@ export function ownerChatId(): string {
   if (!first) throw new Error("Set TELEGRAM_OWNER_CHAT_ID or TELEGRAM_ALLOWED_USER_IDS to deliver proactive messages.");
   return first;
 }
+
+/**
+ * Session auth for proactive runs (the morning brief), shaped exactly like
+ * eve's defaultTelegramAuth for the owner's private chat. Google is a
+ * user-scoped connection, so a run needs a "user" principal or every Calendar
+ * and Gmail call fails with principal_required; and memory is keyed by
+ * authenticator + principal id, so matching Telegram keeps the same memories.
+ */
+export function ownerTelegramAuth() {
+  const chatId = ownerChatId();
+  return {
+    authenticator: "telegram-webhook",
+    issuer: "telegram",
+    principalType: "user" as const,
+    principalId: `telegram:${chatId}`,
+    attributes: { chat_id: chatId, chat_type: "private", user_id: chatId },
+  };
+}
