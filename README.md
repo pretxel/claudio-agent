@@ -120,14 +120,18 @@ and documents, so `agent/channels/telegram.ts` pulls the audio file id out of
 the raw update itself, transcribes it with Scribe, and writes the transcript
 onto the message so the turn is not empty.
 
+Replies answer in kind: a text message gets a text reply, and a voice note gets
+a voice note only (no text copy). The voice turn is tagged `mode: "voice"` on
+its auth, which also switches on the spoken-style instructions.
+
 Set `ELEVENLABS_API_KEY`. Two limits worth knowing:
 
 - On the free plan only **premade** voices work through the API. Library and
   professional voices return `402 paid_plan_required`, Spanish ones included.
   The default is Sarah (`EXAVITQu4vr4xnSDxMaL`) with `eleven_multilingual_v2`.
-- Replies over 1200 characters are sent as text only, since ElevenLabs bills per
-  character. `TELEGRAM_VOICE_REPLY=off` turns speech off entirely; the text
-  reply is always sent either way.
+- Voice replies over 1200 characters are sent as text instead, since ElevenLabs
+  bills per character; a failed synthesis also falls back to text.
+  `TELEGRAM_VOICE_REPLY=off` turns speech off entirely.
 
 ## Telegram bot
 

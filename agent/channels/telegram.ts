@@ -14,8 +14,8 @@ const allowedUserIds = (process.env.TELEGRAM_ALLOWED_USER_IDS ?? "")
   .map((id) => id.trim())
   .filter(Boolean);
 
-// "always" (default) speaks every reply, "off" stays text-only.
-const voiceReplies = (process.env.TELEGRAM_VOICE_REPLY ?? "always").toLowerCase();
+// "on" (default) answers a voice note with a voice note, "off" stays text-only.
+const voiceReplies = (process.env.TELEGRAM_VOICE_REPLY ?? "on").toLowerCase();
 
 // ElevenLabs bills per character, so long answers stay text-only.
 const VOICE_REPLY_MAX_CHARS = 1200;
@@ -57,8 +57,10 @@ export default telegramChannel({
         }
         // A voice note carries no text, so the turn would otherwise be empty.
         (message as { text: string }).text = transcript;
+        const auth = defaultTelegramAuth(message);
         return {
-          auth: defaultTelegramAuth(message),
+          // `mode: "voice"` shapes the reply for the ear and makes it a voice note.
+          auth: auth && { ...auth, attributes: { ...auth.attributes, mode: "voice" } },
           context: [`<voice_note>transcript: ${transcript}</voice_note>`],
         };
       } catch (error) {
@@ -74,20 +76,23 @@ export default telegramChannel({
     return { auth: defaultTelegramAuth(message) };
   },
   events: {
-    // Speak the reply, then always post the text so it stays readable.
-    async "message.completed"(data, channel) {
+    // Answer in kind: a voice note gets a voice note, text gets text. A voice
+    // reply falls back to text when it is too long or synthesis fails.
+    async "message.completed"(data, channel, ctx) {
       if (data.finishReason === "tool-calls" || !data.message) return;
 
       const text = typeof data.message === "string" ? data.message : String(data.message);
       const chatId = channel.state.chatId;
+      const voiceTurn = ctx.session.auth.current?.attributes.mode === "voice";
 
-      if (voiceReplies !== "off" && chatId && text.length <= VOICE_REPLY_MAX_CHARS) {
+      if (voiceTurn && voiceReplies !== "off" && chatId && text.length <= VOICE_REPLY_MAX_CHARS) {
         try {
           await sendTelegramVoice({
             chatId,
             audio: await synthesizeSpeech(text),
             messageThreadId: channel.state.messageThreadId ?? undefined,
           });
+          return;
         } catch (error) {
           console.error("voice reply failed, falling back to text", error);
         }
