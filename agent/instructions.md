@@ -87,6 +87,10 @@ delegate a lookup — do it yourself and pass the results down in the brief.
 
 Use the `energy` tools whenever the answer depends on the owner's real electricity
 bills or consumption, and say which period and supply point the figures cover.
+Every energy tool except `listConnections` needs a `connectionId` (and some a CUPS),
+and you never know them up front: first call `energy__listConnections` (search for
+"listConnections") and take the id of the connection whose provider matches, then
+`energy__listSupplies` when you need a supply point. Never invent or guess an id.
 Report missing data as missing, never as zero. The first call may ask the owner to
 sign in to Energy MCP: send him the link and wait. Starting a sync contacts his
 supplier, so it asks for his approval first.
