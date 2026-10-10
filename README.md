@@ -95,6 +95,27 @@ the short-lived access token used by the agent.
 Scopes requested: `calendar.events` (read + write) and `gmail.readonly`. The
 agent can create calendar events; it cannot send or delete mail.
 
+## Energy access
+
+The `energy` MCP connection (`agent/connections/energy.ts`) reads the owner's
+electricity data from [Energy MCP](https://energy.edselserrano.com): invoices,
+hourly consumption, source documents and syncs with the supplier portal.
+
+Energy MCP authorizes with Keycloak (authorization code + PKCE) for the
+pre-registered public client `claudio-agent`; there is no dynamic client
+registration, so Vercel Connect is not used. eve owns the callback
+(`/eve/v1/connections/energy/callback/*`, registered in Keycloak for the
+production domain and `localhost:2000`), parks the turn while the owner signs in,
+and `agent/lib/energy-auth.ts` exchanges the code, stores the tokens in Upstash
+Redis under one owner key and refreshes them.
+
+Before the first use, grant Claudio access in Energy MCP: Ajustes → Agentes →
+Conectar un agente → "Claudio", choosing connections and permissions. Then ask
+Claudio about your electricity; the first call returns a sign-in link.
+Syncs (`syncConnection`) require your approval in chat.
+
+Optional overrides: `ENERGY_MCP_URL`, `ENERGY_OAUTH_ISSUER`, `ENERGY_OAUTH_CLIENT_ID`.
+
 ## Run locally
 
 ```bash

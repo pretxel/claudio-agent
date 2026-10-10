@@ -5,6 +5,7 @@ import {
 } from "eve/channels/telegram";
 import { synthesizeSpeech, transcribeAudio } from "#lib/elevenlabs.ts";
 import { downloadTelegramFile, sendTelegramVoice } from "#lib/telegram-media.ts";
+import { renderAuthorizationCompleted, renderAuthorizationPrompt } from "#lib/authorization-prompt.ts";
 
 // The bot speaks for the owner's Google account, so only the owner may talk to
 // it. Comma-separated Telegram user ids; run `node scripts/telegram.mjs whoami`
@@ -76,6 +77,15 @@ export default telegramChannel({
     return { auth: defaultTelegramAuth(message) };
   },
   events: {
+    // Telegram has no built-in sign-in UI: send the connection's login link as a message.
+    async "authorization.required"(data, channel) {
+      await channel.telegram.post(renderAuthorizationPrompt(data));
+    },
+    async "authorization.completed"(data, channel) {
+      const text = renderAuthorizationCompleted(data);
+      if (text) await channel.telegram.post(text);
+      else await channel.telegram.startTyping();
+    },
     // Answer in kind: a voice note gets a voice note, text gets text. A voice
     // reply falls back to text when it is too long or synthesis fails.
     async "message.completed"(data, channel, ctx) {
