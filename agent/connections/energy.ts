@@ -10,7 +10,8 @@ const auth = createEnergyAuth({ config, store: defaultEnergyTokenStore() });
 export default defineMcpClientConnection({
   url: config.resource,
   description:
-    "Electricidad de Edsel (Energy MCP): conexiones con su compañía eléctrica, suministros (CUPS), facturas con importes y conceptos, consumo por horas o días, comparación de periodos, documentos originales y sincronización con el portal.",
+    "Electricidad de Edsel (Energy MCP): conexiones con su compañía eléctrica, suministros (CUPS), facturas con importes y conceptos, consumo por horas o días, comparación de periodos, documentos originales y sincronización con el portal. " +
+    "Empieza siempre por listConnections: devuelve el connectionId que piden las demás herramientas.",
   // The sign-in challenge carries displayName "Energy MCP" (see startAuthorization).
   auth: defineInteractiveAuthorization({
     getToken: () => auth.getToken(),
