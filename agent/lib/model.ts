@@ -6,7 +6,9 @@ import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 // that are callable from any commercial region.
 const bedrock = createAmazonBedrock({
   apiKey: process.env.AWS_BEARER_TOKEN_BEDROCK,
-  region: process.env.AWS_REGION,
+  // Vercel sets AWS_REGION; local dev and evals usually don't. Any commercial
+  // region can call the global profiles, so fall back instead of failing.
+  region: process.env.AWS_REGION || "us-east-1",
 });
 
 export const models = {
