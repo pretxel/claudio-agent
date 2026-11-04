@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { calendarCreateApproval } from "#lib/calendar-approval.ts";
 import { googleAuth, googlePost } from "#lib/google.ts";
 
 export default defineTool({
@@ -16,6 +17,8 @@ export default defineTool({
     attendees: z.array(z.string().email()).optional(),
     calendarId: z.string().default("primary"),
   }),
+  // Invitations reach other people, so they need the owner's explicit OK.
+  approval: calendarCreateApproval,
   async execute(input, ctx) {
     const { token } = await ctx.getToken(googleAuth);
     const bound = (value: string) =>
