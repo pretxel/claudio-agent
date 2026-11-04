@@ -14,4 +14,6 @@ export const models = {
   researcher: bedrock("global.anthropic.claude-haiku-4-5-20251001-v1:0"),
   planner: bedrock("global.anthropic.claude-sonnet-4-5-20250929-v1:0"),
   summarizer: bedrock("global.anthropic.claude-haiku-4-5-20251001-v1:0"),
+  // Grades evals (evals/evals.config.ts); never runs the agent itself.
+  judge: bedrock("global.anthropic.claude-sonnet-4-5-20250929-v1:0"),
 };

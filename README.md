@@ -121,7 +121,32 @@ Optional overrides: `ENERGY_MCP_URL`, `ENERGY_OAUTH_ISSUER`, `ENERGY_OAUTH_CLIEN
 ```bash
 npm run dev          # eve dev server + interactive REPL
 npm run typecheck    # tsc
+npm test             # unit tests (node --test)
+npm run eval         # behavioral evals against the real model (see below)
 ```
+
+## Evals
+
+`evals/` holds behavioral evals for eve's runner: personality and register,
+tool routing (reminder vs. calendar event), memory, and safety (the invite
+approval gate, prompt injection in a pasted email). They run the real agent on
+Bedrock and grade fuzzy criteria with an LLM judge (`models.judge`).
+
+Always run them through `npm run eval`, never bare `eve eval`. The wrapper
+blanks the Redis and QStash credentials from `.env.local`, so memory and
+reminders fall back to in-process stores and no eval writes a real memory or
+sends a real Telegram reminder. It refuses `--url` (a deployment uses its real
+stores) unless `EVAL_ALLOW_REMOTE=1`. Needs `AWS_BEARER_TOKEN_BEDROCK` in
+`.env.local`.
+
+```bash
+npm run eval                      # everything
+npm run eval -- safety            # one directory
+npm run eval -- --tag fast        # by tag
+npm run eval -- --strict          # judge scores below threshold also fail (CI)
+```
+
+Artifacts with full event streams land in `.eve/evals/<timestamp>/`.
 
 ## Web search
 
