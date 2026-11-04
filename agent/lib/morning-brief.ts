@@ -4,6 +4,7 @@
 
 import type { Reminder } from "#lib/reminder-store.ts";
 import { localDayBounds } from "#lib/zoned-time.ts";
+import { renderTurnClock } from "#lib/temporal-context.ts";
 
 export function renderMorningBriefPrompt(input: { now: Date; timeZone: string; reminders: readonly Reminder[] }): string {
   const { start, end, date } = localDayBounds(input.now, input.timeZone);
@@ -11,7 +12,10 @@ export function renderMorningBriefPrompt(input: { now: Date; timeZone: string; r
     .filter((r) => r.dueAt >= start.toISOString() && r.dueAt < end.toISOString())
     .map((r) => ({ id: r.id, text: r.text, dueAt: r.dueAt, repeat: r.repeat }));
 
-  return `<scheduled_task name="morning-brief">
+  // A scheduled turn has no inbound message context, so the clock goes in the prompt.
+  return `${renderTurnClock({ now: input.now, timeZone: input.timeZone })}
+
+<scheduled_task name="morning-brief">
 Nadie te ha escrito: es el resumen de la mañana programado y tú abres la conversación.
 
 Hoy es ${date} en ${input.timeZone}.

@@ -1,6 +1,7 @@
-import { eveChannel } from "eve/channels/eve";
+import { defaultEveAuth, eveChannel } from "eve/channels/eve";
 import { localDev, vercelOidc } from "eve/channels/auth";
 import { apiKeyAuth } from "#lib/api-key-auth.ts";
+import { renderTurnClock } from "#lib/temporal-context.ts";
 
 export default eveChannel({
   auth: [
@@ -12,4 +13,7 @@ export default eveChannel({
     localDev(),
     // No placeholder: routeAuth fails closed with a 401 + `WWW-Authenticate: Bearer` challenge.
   ],
+  // Each message carries the current clock as context (history), not in the
+  // system prompt, so the prompt cache keeps covering the conversation.
+  onMessage: (ctx) => ({ auth: defaultEveAuth(ctx), context: [renderTurnClock()] }),
 });

@@ -6,6 +6,7 @@ import {
 import { synthesizeSpeech, transcribeAudio } from "#lib/elevenlabs.ts";
 import { downloadTelegramFile, sendTelegramVoice } from "#lib/telegram-media.ts";
 import { renderAuthorizationCompleted, renderAuthorizationPrompt } from "#lib/authorization-prompt.ts";
+import { renderTurnClock } from "#lib/temporal-context.ts";
 
 // The bot speaks for the owner's Google account, so only the owner may talk to
 // it. Comma-separated Telegram user ids; run `node scripts/telegram.mjs whoami`
@@ -65,7 +66,7 @@ export default telegramChannel({
         return {
           // `mode: "voice"` shapes the reply for the ear and makes it a voice note.
           auth: auth && { ...auth, attributes: { ...auth.attributes, mode: "voice" } },
-          context: [`<voice_note>transcript: ${transcript}</voice_note>`],
+          context: [renderTurnClock(), `<voice_note>transcript: ${transcript}</voice_note>`],
         };
       } catch (error) {
         // Provider errors can carry request ids and internals; keep them in the logs.
@@ -78,7 +79,8 @@ export default telegramChannel({
     // A photo or PDF sent without a caption is still a real message.
     if ((message.text || message.caption).trim().length === 0 && message.attachments.length === 0) return null;
     await ctx.telegram.startTyping();
-    return { auth: defaultTelegramAuth(message) };
+    // The clock rides with the message, not the system prompt, to keep the prompt cache warm.
+    return { auth: defaultTelegramAuth(message), context: [renderTurnClock()] };
   },
   events: {
     // Telegram has no built-in sign-in UI: send the connection's login link as a message.

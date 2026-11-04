@@ -1,12 +1,11 @@
-// Gives every turn a fresh clock so relative dates remain correct in long-lived sessions.
+// Stable guidance about time. The exact clock travels with each inbound message
+// as `<current_time>` context (see renderTurnClock), not here: anything that
+// changes per turn in the system prompt defeats the prompt cache.
 import { defineDynamic, defineInstructions } from "eve/instructions";
-import { renderTemporalContext } from "#lib/temporal-context.ts";
+import { renderTemporalGuidance } from "#lib/temporal-context.ts";
 
 export default defineDynamic({
   events: {
-    "turn.started": () =>
-      defineInstructions({
-        markdown: renderTemporalContext(),
-      }),
+    "session.started": () => defineInstructions({ markdown: renderTemporalGuidance() }),
   },
 });
