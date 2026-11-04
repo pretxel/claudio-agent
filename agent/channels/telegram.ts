@@ -38,6 +38,9 @@ export default telegramChannel({
     botToken: () => process.env.TELEGRAM_BOT_TOKEN!,
     webhookSecretToken: () => process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN!,
   },
+  // Photos (receipts, screenshots) and PDFs (invoices) reach the model; without
+  // a policy eve never fetches them. Claude on Bedrock reads both natively.
+  uploadPolicy: { allowedMediaTypes: ["image/*", "application/pdf"], maxBytes: 10 * 1024 * 1024 },
   // Replaces the default dispatch gate: private chats from the owner only.
   // Returning null drops the update without a reply.
   async onMessage(ctx, message) {
@@ -72,7 +75,8 @@ export default telegramChannel({
       }
     }
 
-    if ((message.text || message.caption).trim().length === 0) return null;
+    // A photo or PDF sent without a caption is still a real message.
+    if ((message.text || message.caption).trim().length === 0 && message.attachments.length === 0) return null;
     await ctx.telegram.startTyping();
     return { auth: defaultTelegramAuth(message) };
   },

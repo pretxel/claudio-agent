@@ -35,9 +35,12 @@ agent/
 ├── tools/
 │   ├── agent.ts                 # Disables the built-in self-copy tool
 │   ├── calendar_list_events.ts  # Read events in a time window
-│   ├── calendar_create_event.ts # Create an event
+│   ├── calendar_create_event.ts # Create an event (approval when it has guests)
+│   ├── calendar_update_event.ts # Move/edit an event (always asks approval)
+│   ├── calendar_delete_event.ts # Cancel an event (always asks approval)
 │   ├── gmail_search.ts          # Gmail query syntax search
 │   ├── gmail_read_message.ts    # Read one message body
+│   ├── gmail_create_draft.ts    # Save a draft (new or threaded reply); never sends
 │   └── web_search.ts            # Tavily search
 ├── channels/
 │   ├── telegram.ts              # Telegram bot channel
@@ -92,8 +95,15 @@ The Google tools act as one account (yours) through the Vercel Connect connector
 `google/claudio-google`. Connect stores the OAuth grant and automatically rotates
 the short-lived access token used by the agent.
 
-Scopes requested: `calendar.events` (read + write) and `gmail.readonly`. The
-agent can create calendar events; it cannot send or delete mail.
+Scopes requested: `calendar.events` (read + write), `gmail.readonly`, and
+`gmail.compose`. The agent can create, move, and cancel calendar events (moves,
+cancellations, and invitations to guests wait for the owner's approval in the
+chat) and save Gmail drafts. Nothing in the agent sends or deletes mail;
+`gmail.compose` is there for drafts only.
+
+Adding a scope means the owner has to grant it: if the connector in Vercel
+Connect lists scopes, add `gmail.compose` there too, then re-authorize the
+Google account.
 
 ## Energy access
 

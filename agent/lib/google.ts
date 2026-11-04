@@ -10,6 +10,8 @@ export const googleAuth = connect({
     scopes: [
       "https://www.googleapis.com/auth/calendar.events",
       "https://www.googleapis.com/auth/gmail.readonly",
+      // Create drafts only. Nothing in the agent sends mail.
+      "https://www.googleapis.com/auth/gmail.compose",
     ],
   },
   // This is a single-owner agent, so every channel uses the same Google grant.
@@ -37,18 +39,40 @@ export async function googleGet<T>(
   return (await res.json()) as T;
 }
 
-/** POST JSON to a Google API endpoint with the owner's credentials. */
-export async function googlePost<T>(token: string, url: string, body: unknown): Promise<T> {
+/** Send a JSON body (or none) to a Google API endpoint with the owner's credentials. */
+async function googleRequest<T>(
+  token: string,
+  method: "POST" | "PATCH" | "DELETE",
+  url: string,
+  body?: unknown,
+): Promise<T> {
   const res = await fetch(url, {
-    method: "POST",
+    method,
     headers: {
       authorization: `Bearer ${token}`,
-      "content-type": "application/json",
+      ...(body === undefined ? {} : { "content-type": "application/json" }),
     },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
     throw new Error(`${new URL(url).pathname} failed (${res.status}): ${await res.text()}`);
   }
-  return (await res.json()) as T;
+  // DELETE answers 204 with an empty body.
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/** POST JSON to a Google API endpoint with the owner's credentials. */
+export function googlePost<T>(token: string, url: string, body: unknown): Promise<T> {
+  return googleRequest<T>(token, "POST", url, body);
+}
+
+/** PATCH JSON to a Google API endpoint: only the fields present change. */
+export function googlePatch<T>(token: string, url: string, body: unknown): Promise<T> {
+  return googleRequest<T>(token, "PATCH", url, body);
+}
+
+/** DELETE a Google API resource. */
+export async function googleDelete(token: string, url: string): Promise<void> {
+  await googleRequest<void>(token, "DELETE", url);
 }
