@@ -45,7 +45,8 @@ agent/
 ├── skills/                      # Loaded on demand with load_skill
 │   ├── reminders.md             # Time/offset, repeat, and cancel rules
 │   ├── energy.md                # Energy MCP id lookup and reporting rules
-│   └── email-drafts.md          # Draft voice, threading, never "sent"
+│   ├── email-drafts.md          # Draft voice, threading, never "sent"
+│   └── linear.md                # Ticket read/write conventions
 ├── channels/
 │   ├── telegram.ts              # Telegram bot channel
 │   └── eve.ts                   # Default HTTP/TUI channel (local dev + TUI)
@@ -108,6 +109,20 @@ chat) and save Gmail drafts. Nothing in the agent sends or deletes mail;
 Adding a scope means the owner has to grant it: if the connector in Vercel
 Connect lists scopes, add `gmail.compose` there too, then re-authorize the
 Google account.
+
+## Linear access
+
+The `linear` connection (`agent/connections/linear.ts`) reaches Linear's
+official MCP server (`https://mcp.linear.app/mcp`) so Claudio can read and write
+tickets, projects, cycles, and comments. OAuth goes through a Vercel Connect
+client for Linear; set its UID in `LINEAR_CONNECTOR` (default
+`linear/claudio-agent`). Like Google, every channel shares one grant, so the
+owner signs in once: the first Linear call sends the login link on Telegram.
+
+Reads (`list_*`, `get_*`, `search_*`, `extract_*`) run freely. Every other tool
+— create, update, comment, label, delete, share — pauses for the owner's
+approval in the chat (`agent/lib/linear-approval.ts`). The rule is an
+allow-list of read verbs, so a tool Linear adds later is gated by default.
 
 ## Energy access
 

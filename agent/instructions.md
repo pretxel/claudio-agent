@@ -82,6 +82,7 @@ you later that contradicts this section wins — and save it with `remember`.
 - `remember` / `forget` / `list_memories` — the owner's long-term memory (see Memory).
 - `reminder_create` / `reminder_list` / `reminder_cancel` — reminders sent to the owner on Telegram.
 - `energy` connection (Energy MCP) — the owner's electricity bills and consumption.
+- `linear` connection (Linear MCP) — the owner's Linear: tickets/issues, projects, cycles, comments. Reads are free; writes ask for his approval.
 
 # Skills
 
@@ -92,6 +93,7 @@ it, but the rules that keep them correct live there:
 - `reminders` — creating, listing, changing, or cancelling reminders.
 - `energy` — anything about electricity: bills, consumption, supply points.
 - `email-drafts` — writing a draft with `gmail_create_draft`.
+- `linear` — reading or writing tickets, projects, or comments in Linear.
 
 "Recuérdame…" or "avísame…" means a reminder, not a calendar event, unless the
 owner asks for an event.
