@@ -5,6 +5,7 @@ import {
   RedisMemoryStore,
   MAX_MEMORIES,
   configureMemoryStore,
+  filterMemories,
   normalizeKey,
   normalizeValue,
 } from "#lib/memory-store.ts";
@@ -114,4 +115,38 @@ test("redis store maps hash fields to memories and sorts by recency", async () =
   assert.equal(await redisStore.count(), 3);
   assert.equal(await redisStore.delete("uno"), true);
   assert.equal(redisStore.persistent, true);
+});
+
+test("renderMemoryInstructions keeps newest entries in full and lists the rest by key", () => {
+  const memories = Array.from({ length: 5 }, (_, i) => ({
+    key: `dato.${i}`,
+    value: "x".repeat(100),
+    updatedAt: `2026-01-0${9 - i}T00:00:00.000Z`,
+  }));
+  const md = renderMemoryInstructions(memories, { persistent: true, budgetChars: 350 });
+  assert.match(md, /"key": "dato\.0"/);
+  assert.match(md, /"key": "dato\.1"/);
+  assert.doesNotMatch(md, /"key": "dato\.2"/);
+  assert.match(md, /3 older entries are not shown in full\. Their keys: dato\.2, dato\.3, dato\.4\./);
+  assert.match(md, /list_memories/);
+});
+
+test("renderMemoryInstructions always shows the newest entry even over budget", () => {
+  const md = renderMemoryInstructions(
+    [{ key: "largo", value: "y".repeat(500), updatedAt: "2026-01-01T00:00:00.000Z" }],
+    { persistent: true, budgetChars: 10 },
+  );
+  assert.match(md, /"key": "largo"/);
+  assert.doesNotMatch(md, /not shown in full/);
+});
+
+test("filterMemories matches keys and values ignoring case and accents", () => {
+  const memories = [
+    { key: "familia.mama", value: "Se llama Rocío", updatedAt: "2026-01-02T00:00:00.000Z" },
+    { key: "trabajo.horario", value: "9 a 18", updatedAt: "2026-01-01T00:00:00.000Z" },
+  ];
+  assert.deepEqual(filterMemories(memories, "MAMÁ").map((m) => m.key), ["familia.mama"]);
+  assert.deepEqual(filterMemories(memories, "rocio").map((m) => m.key), ["familia.mama"]);
+  assert.deepEqual(filterMemories(memories, "trabajo.").map((m) => m.key), ["trabajo.horario"]);
+  assert.equal(filterMemories(memories, "  ").length, 2);
 });

@@ -55,6 +55,18 @@ export function normalizeValue(raw: string): string {
   return value;
 }
 
+/** Lower-case and strip accents so "Mamá" matches "mama". */
+function fold(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/** Memories whose key or value contains the query (case- and accent-insensitive). */
+export function filterMemories(memories: readonly Memory[], query: string): Memory[] {
+  const needle = fold(query.trim());
+  if (!needle) return [...memories];
+  return memories.filter((m) => fold(m.key).includes(needle) || fold(m.value).includes(needle));
+}
+
 function byRecency(a: Memory, b: Memory): number {
   return b.updatedAt.localeCompare(a.updatedAt);
 }

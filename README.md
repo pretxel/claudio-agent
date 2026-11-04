@@ -42,6 +42,10 @@ agent/
 │   ├── gmail_read_message.ts    # Read one message body
 │   ├── gmail_create_draft.ts    # Save a draft (new or threaded reply); never sends
 │   └── web_search.ts            # Tavily search
+├── skills/                      # Loaded on demand with load_skill
+│   ├── reminders.md             # Time/offset, repeat, and cancel rules
+│   ├── energy.md                # Energy MCP id lookup and reporting rules
+│   └── email-drafts.md          # Draft voice, threading, never "sent"
 ├── channels/
 │   ├── telegram.ts              # Telegram bot channel
 │   └── eve.ts                   # Default HTTP/TUI channel (local dev + TUI)

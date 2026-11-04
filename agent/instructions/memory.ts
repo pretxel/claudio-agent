@@ -3,7 +3,7 @@
 // visible in this one.
 
 import { defineDynamic, defineInstructions } from "eve/instructions";
-import { getMemoryStore } from "#lib/memory-store.ts";
+import { getMemoryStore, MAX_MEMORIES } from "#lib/memory-store.ts";
 import { renderMemoryInstructions } from "#lib/memory-prompt.ts";
 
 export default defineDynamic({
@@ -11,7 +11,8 @@ export default defineDynamic({
     "turn.started": async () => {
       const store = getMemoryStore();
       try {
-        const memories = await store.list(100);
+        // Load every entry; the renderer decides what fits the prompt budget.
+        const memories = await store.list(MAX_MEMORIES);
         return defineInstructions({ markdown: renderMemoryInstructions(memories, { persistent: store.persistent }) });
       } catch (error) {
         console.error("[memory] failed to load memories", error);

@@ -68,9 +68,9 @@ export default telegramChannel({
           context: [`<voice_note>transcript: ${transcript}</voice_note>`],
         };
       } catch (error) {
-        await ctx.telegram.post(
-          `No pude transcribir el audio: ${error instanceof Error ? error.message : String(error)}`,
-        );
+        // Provider errors can carry request ids and internals; keep them in the logs.
+        console.error("[telegram] voice note transcription failed", error);
+        await ctx.telegram.post("No pude transcribir el audio. ¿Me lo escribes o lo intentas de nuevo?");
         return null;
       }
     }

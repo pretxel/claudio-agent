@@ -6,6 +6,8 @@ export default defineEval({
   async test(t) {
     await t.send("Recuérdame mañana a las 9 llamar al banco");
     t.succeeded();
+    // Tracked, not gated: the skill carries the offset and repeat rules.
+    t.loadedSkill("reminders").soft();
     t.calledTool("reminder_create", {
       input: {
         text: /banco/i,
