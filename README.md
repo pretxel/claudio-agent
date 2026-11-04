@@ -124,6 +124,22 @@ Reads (`list_*`, `get_*`, `search_*`, `extract_*`) run freely. Every other tool
 approval in the chat (`agent/lib/linear-approval.ts`). The rule is an
 allow-list of read verbs, so a tool Linear adds later is gated by default.
 
+### Linear channel
+
+`agent/channels/linear.ts` serves `/eve/v1/linear`, where the same Connect
+client forwards Linear webhooks:
+
+- **Agent Sessions.** Mention or delegate an issue to Claudio in Linear and it
+  answers in the ticket. Only the owner (`LINEAR_OWNER_USER_ID`, default Edsel's
+  Linear user) can start or continue a session; anyone else in the workspace
+  gets a one-line refusal and no turn runs, because Claudio acts with the
+  owner's Gmail, Calendar, and memory. Replies are visible to the whole
+  workspace, so each turn carries a note to keep personal data out of them.
+  Requires the **Agent session events** webhook category on the Linear app.
+- **Notifications.** Issue and Comment webhooks become Telegram messages when
+  someone else assigns the owner an issue or mentions him
+  (`LINEAR_OWNER_USERNAME`) in a comment. Deliveries are deduplicated in Redis.
+
 ## Energy access
 
 The `energy` MCP connection (`agent/connections/energy.ts`) reads the owner's
